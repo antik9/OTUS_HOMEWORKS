@@ -1,0 +1,9 @@
+curl -X POST -d '{"account" : "horns", 
+"login": "admin",
+"token": "684d406ddffc873fd2219ec630f4c4bddc496b7662b2d093c51a3085ca2898e8992f173de0db5907da312ff8b30e0ad7c78f35d949d4cedbf2dbbdff4385f782",
+"method" : "online_score", 
+"arguments" : {"client_ids" : [1, 2], 
+			"date": "2011.12.11",
+			"phone": "79147891221",
+			"email": "lololo@hohoho.boom"}}' localhost:8080/method/
+

@@ -1,0 +1,6 @@
+curl -X POST -d '{"account" : "horns", "login": "baby", 
+"token": "526af999e10aa15748bdc0cbe0ad2f6355dc9790bb1219da49ae7606d37ca8f0cf680baf2e23bc60ea693a7fe3bfc5abd8f28ae80a2c1f366c4ab7b27933c483",
+"method" : "clients_interests", 
+"arguments" : {"client_ids" : [1, 2], 
+			"date": "2011.12.11"}}' localhost:8080/method/
+
