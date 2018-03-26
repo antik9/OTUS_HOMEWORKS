@@ -100,7 +100,7 @@ class DateField(AbstractField):
 
     def validate(self, value):
         try:
-            value = datetime.datetime.strptime(value, "%Y.%m.%d")
+            value = datetime.datetime.strptime(value, "%d.%m.%Y")
         except UserRequestError:
             raise UserRequestError("Wrong format of data")
         return value
