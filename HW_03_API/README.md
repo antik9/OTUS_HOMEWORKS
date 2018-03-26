@@ -5,8 +5,8 @@ To start HttpServer you should type
 ```
 python3 api.py 
 ```
-By default server is on 8080 port of your localhost and there is no log file. All log information goes to stdout.
-If you want to change this configuration you can pass port and log by their short and long options name like this:
+By default server is on 8080 port of your localhost and there is no log file, all log information goes to stdout.
+If you want to change this configuration you can pass port and name of log file by their short and long options names like this:
 ```
 python3 api.py -p 8989
 python3 api.py --port 8989
@@ -15,12 +15,12 @@ python3 api.py --log log.log
 ```
 
 To create valid requests to working server you should choose a method which would you like to use.
-There are two methods: *clients_interests* and *online_score*.
+There are two methods: **clients_interests** and **online_score**.
 
 ## Common configuration to all requests
 
 If you want to send request you should create POST request, for example by curl utilite, and send arguments and
-parameters in *json* format.
+parameters in **json** format.
 
 For valid working of API pass next parameters with request:
 
@@ -33,8 +33,8 @@ For valid working of API pass next parameters with request:
 ## Clients interests
 
 To get clients interests you should add ```"method": "clients_interests"``` to your json. Then you should add ids of
-users in array format in *arguments* parameter of your json. For example: ```"client_ids": [1, 2, 3]```. Also you can
-add optional field *date* in format "DD.MM.YYYY". The whole request looks kinda
+users in format of array in **arguments** parameter of your json. For example: ```"client_ids": [1, 2, 3]```. Also you can
+add optional field **date** in format "DD.MM.YYYY". The whole request looks kinda
 ```
 $ curl -X POST -H "Content-Type: application/json" -d '{"account": "horns&hoofs", "login": "admin",
 "method": "clients_interests", "token":
@@ -58,9 +58,9 @@ If you don't add one of pairs
 * phone and email
 * first_name and last_name
 * birthday and gender
-thre request would not be valid. You should mention of these pairs.
+the request would not be valid. You should mention of these pairs.
 
-The whole reques looks kinda
+The whole request looks kinda
 ```
 curl -X POST -H "Content-Type: application/json" -d '{"account": "horns&hoofs", "login": "h&f",
 "method": "online_score", "token":
