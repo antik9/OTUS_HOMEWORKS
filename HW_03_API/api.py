@@ -9,7 +9,6 @@ import logging
 import hashlib
 import uuid
 import re
-from dateutil.relativedelta import relativedelta
 from optparse import OptionParser
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from scoring import get_interests, get_score
@@ -111,7 +110,7 @@ class BirthDayField(DateField):
     def validate(self, value):
         value = super(BirthDayField, self).validate(value)
         today = datetime.datetime.now()
-        if today - relativedelta(years=70) > value:
+        if today > datetime.datetime(value.year + 70, value.month, value.day):
             raise UserRequestError("Client can't be older than 70 years")
         return value
 

@@ -4,7 +4,7 @@ curl -X POST -d '{"account" : "horns",
 "method" : "online_score", 
 "arguments" : {"client_ids" : [1, 2], 
 			"date": "12.11.2012",
-			"birthday": "9.11.1960",
+			"birthday": "9.11.1940",
 			"phone": "78989898991",
 			"email": "imik@mail.ui",
 			"gender": 1}}' localhost:8080/method/
