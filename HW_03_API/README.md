@@ -23,13 +23,13 @@ If you want to send request you should create POST request, for example by curl 
 parameters in *json* format.
 
 For valid working of API pass next parameters with request:
-```
-account
-login
-method 
-token
-arguments
-```
+
+* account
+* login
+* method 
+* token
+* arguments
+
 ## Clients interests
 
 To get clients interests you should add ```"method": "clients_interests"``` to your json. Then you should add ids of
