@@ -140,16 +140,17 @@ class ClientIDsField(AbstractField):
 class BasicRequest:
     """Basic class of handlers"""
 
-    def __init__(self, cls, store, arguments):
+    def __init__(self, store, arguments):
         self.store = store
         self.errors = []
-        self.blanks = 0
+        self.not_blanks = []
         self.storage = {}
 
-        for key, value in cls.__dict__.items():
+        for key, value in self.__class__.__dict__.items():
             if isinstance(value, AbstractField):
                 _stored_value = arguments.get(key)
-                self.blanks += _stored_value is None
+                if _stored_value:
+                    self.not_blanks.append(key)
 
                 # Add all errors during processing to self.errors
                 if value.required and _stored_value is None:
@@ -176,9 +177,7 @@ class ClientsInterestsRequest(BasicRequest):
     date = DateField(required=False, nullable=True)
 
     def __init__(self, store, ctx, arguments):
-        super(ClientsInterestsRequest, self).__init__(ClientsInterestsRequest,
-                                                      store,
-                                                      arguments)
+        super(ClientsInterestsRequest, self).__init__(store, arguments)
         ctx["nclients"] = 0
         if not self.storage["client_ids"]:
             raise UserRequestError("There are no clients ids to get their interests")
@@ -204,17 +203,21 @@ class OnlineScoreRequest(BasicRequest):
     gender = GenderField(required=False, nullable=True)
 
     def __init__(self, store, ctx, arguments):
-        super(OnlineScoreRequest, self).__init__(OnlineScoreRequest,
-                                                 store,
-                                                 arguments)
+        super(OnlineScoreRequest, self).__init__(store, arguments)
 
-        ctx["has"] = 6 - self.blanks
-        if not (self.storage["phone"] is not None and
-                self.storage["email"] is not None or
-                self.storage["first_name"] is not None and
-                self.storage["last_name"] is not None or
-                self.storage["birthday"] is not None and
-                self.storage["gender"] is not None):
+        ctx["has"] = self.not_blanks
+
+        # Necessary fields. One of pair should be fulfilled with data
+        necessary_data = [
+            ("phone", "email"),
+            ("first_name", "last_name"),
+            ("birthday", "gender"),
+        ]
+
+        for field_one, field_two in necessary_data:
+            if self.storage[field_one] and self.storage[field_two]:
+                break
+        else:
             raise UserRequestError("In request should be phone and email or "
                                    "first name and last name or "
                                    "birthday date and gender")
@@ -233,9 +236,7 @@ class MethodRequest(BasicRequest):
     method = CharField(required=True, nullable=False)
 
     def __init__(self, store, _, arguments):
-        super(MethodRequest, self).__init__(MethodRequest,
-                                            store,
-                                            arguments)
+        super(MethodRequest, self).__init__(store, arguments)
 
     @property
     def is_admin(self):
@@ -306,6 +307,7 @@ class MainHTTPHandler(BaseHTTPRequestHandler):
         try:
             data_string = self.rfile.read(int(self.headers['Content-Length']))
             request = json.loads(data_string)
+            print(request)
         except Exception as e:
             code = BAD_REQUEST
 
