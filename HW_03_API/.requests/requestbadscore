@@ -1,8 +1,0 @@
-curl -X POST -d '{"account" : "horns", 
-"method" : "online_score", 
-"arguments" : {"client_ids" : [1, 2], 
-			"date": "2011.12.11",
-			"birthday": "1950.10.8",
-			"first_name": "Bad",
-			"email": "lololo@hohoho.boom"}}' localhost:8080/method/
-

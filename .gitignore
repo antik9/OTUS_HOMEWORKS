@@ -1,4 +1,5 @@
 .idea/
 __*
-HW_O3_API/.*
 HW_03_API/__*
+HW_03_API/.requests/
+.requests/
