@@ -1,5 +1,5 @@
 .idea/
-__*
-HW_03_API/__*
-HW_03_API/.requests/
+_*
 .requests/
+.cache
+*pyc
