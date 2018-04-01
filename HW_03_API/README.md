@@ -1,7 +1,7 @@
 # Third Homework Task
 ## Python API to POST requests to work with scoring and interests of users
 
-Before you launch server you should start your localhost memcached to work with api. This command should be like this:
+Before you launch server you should start your localhost memcached to work with api. The command should be like this:
 ```
 memcached -p 11211 -d
 ```
