@@ -77,8 +77,9 @@ curl -X POST -H "Content-Type: application/json" -d '{"account": "horns&hoofs", 
 ```
 ## Test
 
-To test application for correct work you should run test.py script. Choose which command do you like more:
+To test application for correct work you should run **test.py** script. Choose which command do you like more:
 ```
 python3 test.py 
 pytest test.py
 ```
+When you run command application perform unit and functional test on api.py.
