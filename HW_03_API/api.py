@@ -8,7 +8,7 @@ import json
 import datetime
 import logging
 import hashlib
-import uuid
+import uuid& 
 import re
 from optparse import OptionParser
 from http.server import HTTPServer, BaseHTTPRequestHandler
@@ -338,6 +338,7 @@ class MainHTTPHandler(BaseHTTPRequestHandler):
 
         path = self.path.strip("/")
         logging.info("%s: %s %s" % (self.path, data_string, context["request_id"]))
+
         if path in self.router:
             try:
                 response, code = self.router[path]({"body": request, "headers": self.headers},
