@@ -82,4 +82,4 @@ To test application for correct work you should run **test.py** script. Choose w
 python3 test.py 
 pytest test.py
 ```
-When you run command application perform unit and functional test on api.py.
+When you run this command application perform unit and functional tests on api.py.
