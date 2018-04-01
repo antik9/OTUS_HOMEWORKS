@@ -1,15 +1,22 @@
 # Third Homework Task
 ## Python API to POST requests to work with scoring and interests of users
 
+Before you launch server you should start your localhost memcached to work with api. This command should be like this:
+```
+memcached -p 11211 -d
+```
+
 To start HttpServer you should type 
 ```
 python3 api.py 
 ```
-By default server is on 8080 port of your localhost and there is no log file, all log information goes to stdout.
+By default server is on 8080 port of your localhost, listen to memcached on port 11211 and there is no log file, all log information goes to stdout.
 If you want to change this configuration you can pass port and name of log file by their short and long options names like this:
 ```
 python3 api.py -p 8989
 python3 api.py --port 8989
+python3 api.py -m 11211
+python3 api.py --memcached 11211
 python3 api.py -l log.log
 python3 api.py --log log.log
 ```
@@ -67,4 +74,11 @@ curl -X POST -H "Content-Type: application/json" -d '{"account": "horns&hoofs", 
 "55cc9ce545bcd144300fe9efc28e65d415b923ebb6be1e19d2750a2c03e80dd209a27954dca045e5bb12418e7d89b6d718a9e35af3",
 "arguments": {"phone": "70123456789", "email": "012345@678.90", "first_name": "Stas",
 "last_name": "Stupnikov", "birthday": "01.01.1990", "gender": 1}}' http://127.0.0.1:8080/method/
+```
+## Test
+
+To test application for correct work you should run test.py script. Choose which command do you like more:
+```
+python3 test.py 
+pytest test.py
 ```
