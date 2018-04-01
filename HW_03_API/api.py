@@ -8,7 +8,7 @@ import json
 import datetime
 import logging
 import hashlib
-import uuid& 
+import uuid
 import re
 from optparse import OptionParser
 from http.server import HTTPServer, BaseHTTPRequestHandler
