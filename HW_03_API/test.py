@@ -5,7 +5,6 @@ import datetime
 import hashlib
 from unittest import mock
 from functools import partial
-from abc import abstractmethod
 from api import \
     ADMIN_SALT, OK, FORBIDDEN, \
     get_score, get_interests, method_handler, check_auth, \
@@ -260,10 +259,10 @@ class TestClientIDsField(unittest.TestCase):
             ClientIDsField().validate(value)
 
 
-# ---------------- Basic class which implements common methods --------------- #
+# ------------------- Test class for all handlers -------------------- #
 
-class BasicTestClass(unittest.TestCase):
-    """Basic class for TestHandlers and TestFunctional"""
+class TestHandlers(unittest.TestCase):
+    """Test class for testing work of handlers"""
 
     def setUp(self):
         self.context = {}
@@ -284,28 +283,18 @@ class BasicTestClass(unittest.TestCase):
             score_prefix,
         ))
 
-    def tearDown(self):
-        self.store.connection.delete_multi(self.key_hash)
-        self.store.connection.delete_multi(
-            map(lambda key: interest_prefix + str(key), self.backup.keys()))
-        self.store.connection.disconnect_all()
-
-    @abstractmethod
-    def fulfill(self):
-        """Should be implemented for inheritances"""
-
-
-# ------------------- Test class for all handlers -------------------- #
-
-class TestHandlers(BasicTestClass):
-    """Test class for testing work of handlers"""
-
     def fulfill(self):
         for i in range(1, 11):
             interests = random.sample(SOME_INTERESTS, 2)
             key, value = "%s%d" % (interest_prefix, i), json.dumps(interests)
             self.backup.update({i: value})
             self.store._Storage__setkey(key, value, TIME_OF_STORE)
+
+    def tearDown(self):
+        self.store.connection.delete_multi(self.key_hash)
+        self.store.connection.delete_multi(
+            map(lambda key: interest_prefix + str(key), self.backup.keys()))
+        self.store.connection.disconnect_all()
 
     """Test handler MethodRequest"""
 
@@ -571,13 +560,38 @@ class TestHandlers(BasicTestClass):
 
 # -------------------- Functional testing class ------------------------ #
 
-class TestFunctionalOfApi(BasicTestClass):
+class TestFunctionalOfApi(unittest.TestCase):
+
+    def setUp(self):
+        self.context = {}
+        self.store = Storage()
+        self.backup = {}
+        self.fulfill()
+        self.key_hash = set()
+
+    def add_key_to_hash_key(self, arguments):
+        self.key_hash.add(create_key_part(
+            arguments["arguments"].get("first_name"),
+            arguments["arguments"].get("last_name"),
+            (
+                datetime.datetime.strptime(arguments["arguments"].get("birthday"), "%d.%m.%Y")
+                if arguments["arguments"].get("birthday")
+                else None
+            ),
+            score_prefix,
+        ))
 
     def fulfill(self):
         for i, interests in enumerate(THEIR_INTERESTS):
             key, value = "%s%d" % (interest_prefix, i), json.dumps(interests)
             self.backup.update({i: value})
             self.store._Storage__setkey(key, value, TIME_OF_STORE)
+
+    def tearDown(self):
+        self.store.connection.delete_multi(self.key_hash)
+        self.store.connection.delete_multi(
+            map(lambda key: interest_prefix + str(key), self.backup.keys()))
+        self.store.connection.disconnect_all()
 
     """Functional test to test correctness of interests method request"""
 
