@@ -1,5 +1,3 @@
-__author__ = "Illarionov Anton"
-
 import memcache
 import time
 

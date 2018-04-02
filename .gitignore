@@ -3,3 +3,4 @@ _*
 .requests/
 .cache
 *pyc
+!__init__.py

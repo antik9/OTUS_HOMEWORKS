@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-__author__ = "Illarionov Anton"
-
 from abc import abstractmethod, ABCMeta
 import json
 import datetime

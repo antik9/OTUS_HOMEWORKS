@@ -1,29 +1,34 @@
-__author__ = "Illarionov Anton"
-
 import unittest
 import random
-from api import *
-from store import NoSuchElementError
-from scoring import create_key_part
+import json
+import datetime
+import hashlib
 from unittest import mock
 from functools import partial
+from abc import abstractmethod
+from api import \
+    ADMIN_LOGIN, ADMIN_SALT, SALT, \
+    OK, FORBIDDEN, \
+    get_score, get_interests, method_handler, check_auth, \
+    AbstractField, DateField, ArgumentsField, GenderField, BirthDayField, \
+    ClientIDsField, CharField, PhoneField, EmailField, \
+    DataFieldError, TooMuchErrors, NoMethodError, NoArgumentsError, TooLessInformationError, \
+    MethodRequest, ClientsInterestsRequest, OnlineScoreRequest
+from store import Storage, NoSuchElementError
+from scoring import create_key_part
 
 # --------------------------- Constants ---------------------------- #
 
-ALPHABET = [chr(ch) for ch in range(ord('!'), ord('z'))]
+ALPHABET = [chr(ch) for ch in range(ord('a'), ord('z'))]
 SOME_INTERESTS = ["football", "soccer", "music", "religion", "books", "relax", "leisure",
                   "nothing", "studying", "online-games", "joking"]
-
-"""
-Valid for
-----test_right_authorization,
-----test_bad_authorization,
-----test_forbidden_access,
-----test_no_method_in_request,
-----test_no_arguments_in_request,
-----test_admin_score_is_42,
-"""
-NUM_OF_AUTO_GENERATED_TEST_CASES = 10
+POPULAR_NAMES = ["Peter Parker", "Mary Jane", "Yao Ming", "admin"]
+THEIR_INTERESTS = [
+    ["web", "net"],
+    ["spiders", "tv"],
+    ["ball", "china"],
+    ["hack", "sleep"]
+]
 TIME_OF_STORE = 100
 
 
@@ -96,6 +101,24 @@ class AuthRequest:
         self.storage = {}
 
 
+def create_request(storage):
+    """
+    Create format of user's request with class AuthRequest
+    in place of user's json for tests' cases
+    """
+
+    auth_request = AuthRequest()
+    auth_request.storage = storage
+    return {"body": auth_request}
+
+
+def get_current_admin_token():
+    """Create right admin token to auth admin"""
+    return hashlib.sha512(
+        (datetime.datetime.now().strftime("%Y%m%d%H") +
+         ADMIN_SALT).encode("utf-8")).hexdigest()
+
+
 def create_auth_request(valid=True, admin_rate=.3):
     """Function to create valid/invalid request"""
 
@@ -120,17 +143,17 @@ def create_auth_request(valid=True, admin_rate=.3):
     return request
 
 
-# -------------------- Test class for all fields --------------------- #
+# ------------------- Test classes for all fields -------------------- #
 
-class TestFields(unittest.TestCase):
+class TestAbstractField(unittest.TestCase):
     """Test defined fields of correct interpretation of data pass to them"""
 
     def test_cannot_instantiate_abstract_field(self):
-        try:
+        with self.assertRaises(TypeError):
             AbstractField()
-        except TypeError:
-            pass
 
+
+class TestCharField(unittest.TestCase):
     """Test CharField class"""
 
     @cases([
@@ -149,6 +172,8 @@ class TestFields(unittest.TestCase):
         with self.assertRaises(DataFieldError):
             CharField().validate(value)
 
+
+class TestArgumentsField(unittest.TestCase):
     """Test ArgumentsField class"""
 
     @cases([
@@ -167,6 +192,8 @@ class TestFields(unittest.TestCase):
         with self.assertRaises(DataFieldError):
             ArgumentsField().validate(value)
 
+
+class TestEmailField(unittest.TestCase):
     """Test EmailField class"""
 
     @cases([
@@ -185,6 +212,8 @@ class TestFields(unittest.TestCase):
         with self.assertRaises(DataFieldError):
             EmailField().validate(value)
 
+
+class TestPhoneField(unittest.TestCase):
     """Test PhoneField class"""
 
     @cases([
@@ -205,6 +234,8 @@ class TestFields(unittest.TestCase):
         with self.assertRaises(DataFieldError):
             PhoneField().validate(value)
 
+
+class TestDateField(unittest.TestCase):
     """Test DateField class"""
 
     @cases([
@@ -227,6 +258,8 @@ class TestFields(unittest.TestCase):
         with self.assertRaises(DataFieldError):
             DateField().validate(value)
 
+
+class TestBirthdayField(unittest.TestCase):
     """Test BirthDayField class"""
 
     @cases([
@@ -248,6 +281,8 @@ class TestFields(unittest.TestCase):
         with self.assertRaises(DataFieldError):
             BirthDayField().validate(value)
 
+
+class TestGenderField(unittest.TestCase):
     """Test GenderField class"""
 
     @cases([
@@ -268,6 +303,8 @@ class TestFields(unittest.TestCase):
         with self.assertRaises(DataFieldError):
             GenderField().validate(value)
 
+
+class TestClientIDsField(unittest.TestCase):
     """Test ClientIDsField class"""
 
     @cases([
@@ -287,29 +324,18 @@ class TestFields(unittest.TestCase):
         with self.assertRaises(DataFieldError):
             ClientIDsField().validate(value)
 
-    """THE END"""
 
+# ---------------- Basic class which implements common methods --------------- #
 
-# ------------------- Test class for all handlers -------------------- #
-
-class TestHandlers(unittest.TestCase):
-    """Test class for testing work of handlers"""
+class BasicTestClass(unittest.TestCase):
+    """Basic class for TestHandlers and TestFunctional"""
 
     def setUp(self):
         self.context = {}
-        self.headers = {}
         self.store = Storage()
         self.backup = {}
         self.fulfill()
         self.key_hash = set()
-
-    def fulfill(self):
-
-        for i in range(1, 11):
-            interests = random.sample(SOME_INTERESTS, 2)
-            key, value = "%s%d" % (interest_prefix, i), json.dumps(interests)
-            self.backup.update({i: value})
-            self.store._Storage__setkey(key, value, TIME_OF_STORE)
 
     def add_key_to_hash_key(self, arguments):
         self.key_hash.add(create_key_part(
@@ -323,11 +349,28 @@ class TestHandlers(unittest.TestCase):
             score_prefix,
         ))
 
-    def test_cannot_instantiate_abstract_class(self):
-        try:
-            BasicRequest(store=[], arguments=[])
-        except TypeError:
-            pass
+    def tearDown(self):
+        self.store.connection.delete_multi(self.key_hash)
+        self.store.connection.delete_multi(
+            map(lambda key: interest_prefix + str(key), self.backup.keys()))
+        self.store.connection.disconnect_all()
+
+    @abstractmethod
+    def fulfill(self):
+        """Should be implemented for inheritances"""
+
+
+# ------------------- Test class for all handlers -------------------- #
+
+class TestHandlers(BasicTestClass):
+    """Test class for testing work of handlers"""
+
+    def fulfill(self):
+        for i in range(1, 11):
+            interests = random.sample(SOME_INTERESTS, 2)
+            key, value = "%s%d" % (interest_prefix, i), json.dumps(interests)
+            self.backup.update({i: value})
+            self.store._Storage__setkey(key, value, TIME_OF_STORE)
 
     """Test handler MethodRequest"""
 
@@ -483,83 +526,100 @@ class TestHandlers(unittest.TestCase):
     """Test authorization function"""
 
     @cases([
-        create_auth_request() for _ in range(NUM_OF_AUTO_GENERATED_TEST_CASES)
+        # Right cases
+        {'login': 'Peter Parker', 'account': 'Spiderman',
+         'token': '4de1853f30330c85fb3dc5fc5b1fb2239981e5e0fe1bcfb7137feee75eb9beeef21a63c4652ba576461d7fb60ec9083a7c3cb35345cdf3c798748bd287d975b2'},
+
+        {'login': 'Mary Jane', 'account': 'TV actress',
+         'token': 'dce3e3f520c9294c4ac7fd6e3434be2ed5de97423350f7c509f6321dc6c8a38fa386b1d8a9cbd2f27c6f9c8164e3e11fd369547d988123f31132a69c6e986de7'},
+
+        {'login': 'Yao Ming', 'account': 'Houston Rockets',
+         'token': 'f203215d025be91486e287252ff3895ebecd76f1f280faf7d2fee20610fad104dd60975cceadd4b30e40afeea70c0d66cbe5581edc7802674c07bad21c39bb5e'},
+
+        {'login': 'admin', 'account': 'admin',
+         'token': get_current_admin_token()},
     ])
-    def test_right_authorization(self, request):
-        self.assertTrue(check_auth(request))
+    def test_right_authorization(self, storage):
+        auth_request = create_request(storage)["body"]
+        self.assertTrue(check_auth(auth_request))
 
     @cases([
-        create_auth_request(valid=False) for _ in range(NUM_OF_AUTO_GENERATED_TEST_CASES)
+        {'login': 'Peter Parker', 'account': 'Hulk',
+         'token': '4de1853f30330c85fb3dc5fc5b1fb2239981e5e0fe1bcfb7137feee75eb9beeef21a63c4652ba576461d7fb60ec9083a7c3cb35345cdf3c798748bd287d975b2'},
+
+        {'login': 'Aunt May', 'account': 'TV actress',
+         'token': 'dce3e3f520c9294c4ac7fd6e3434be2ed5de97423350f7c509f6321dc6c8a38fa386b1d8a9cbd2f27c6f9c8164e3e11fd369547d988123f31132a69c6e986de7'},
+
+        {'login': 'Yao Ming', 'account': 'Houston Rockets',
+         'token': 'YaoMingFromChinaWhoIsVeryTallButCantBeAuthorizedThisTime'},
+
+        {'login': 'admin', 'account': 'admin',
+         'token': 'IDontNeedTokenToAuthenticateIHackIt!!'},
     ])
-    def test_bad_authorization(self, request):
-        self.assertFalse(check_auth(request))
+    def test_bad_authorization(self, storage):
+        auth_request = create_request(storage)["body"]
+        self.assertFalse(check_auth(auth_request))
 
     """Test method_handler function which routes handlers"""
 
     @cases([
-        {"body": create_auth_request(valid=False)} for _ in range(NUM_OF_AUTO_GENERATED_TEST_CASES)
+        {'login': 'Peter Parker', 'account': 'Hulk',
+         'token': '4de1853f30330c85fb3dc5fc5b1fb2239981e5e0fe1bcfb7137feee75eb9beeef21a63c4652ba576461d7fb60ec9083a7c3cb35345cdf3c798748bd287d975b2'},
+
+        {'login': 'Aunt May', 'account': 'TV actress',
+         'token': 'dce3e3f520c9294c4ac7fd6e3434be2ed5de97423350f7c509f6321dc6c8a38fa386b1d8a9cbd2f27c6f9c8164e3e11fd369547d988123f31132a69c6e986de7'},
+
+        {'login': 'Yao Ming', 'account': 'Houston Rockets',
+         'token': 'YaoMingFromChinaWhoIsVeryTallButCantBeAuthorizedThisTime'},
+
+        {'login': 'admin', 'account': 'admin',
+         'token': 'IDontNeedTokenToAuthenticateIHackIt!!'},
     ])
     @mock.patch("api.MethodRequest", lambda _x, _y, body: body)
-    def test_forbidden_access(self, request):
+    def test_forbidden_access(self, storage):
+        request = create_request(storage)
         self.assertEqual(method_handler(request, self.context, []),
                          (None, FORBIDDEN))
 
     @cases([
-        {"body": create_auth_request()} for _ in range(NUM_OF_AUTO_GENERATED_TEST_CASES)
+        {'login': 'Peter Parker', 'account': 'Spiderman',
+         'token': '4de1853f30330c85fb3dc5fc5b1fb2239981e5e0fe1bcfb7137feee75eb9beeef21a63c4652ba576461d7fb60ec9083a7c3cb35345cdf3c798748bd287d975b2'},
+
+        {'login': 'Mary Jane', 'account': 'TV actress',
+         'token': 'dce3e3f520c9294c4ac7fd6e3434be2ed5de97423350f7c509f6321dc6c8a38fa386b1d8a9cbd2f27c6f9c8164e3e11fd369547d988123f31132a69c6e986de7'},
+
+        {'login': 'Yao Ming', 'account': 'Houston Rockets',
+         'token': 'f203215d025be91486e287252ff3895ebecd76f1f280faf7d2fee20610fad104dd60975cceadd4b30e40afeea70c0d66cbe5581edc7802674c07bad21c39bb5e'},
+
+        {'login': 'admin', 'account': 'admin',
+         'token': get_current_admin_token()},
     ])
     @mock.patch("api.MethodRequest", lambda _x, _y, body: body)
-    def test_no_method_in_request(self, request):
+    def test_no_method_in_request(self, storage):
+        request = create_request(storage)
         with self.assertRaises(NoMethodError):
             method_handler(request, self.context, [])
 
     @cases([
-        {"body": add_method_to_request(create_auth_request)(admin_rate=0)}
-        for _ in range(NUM_OF_AUTO_GENERATED_TEST_CASES)
+        {'login': 'Peter Parker', 'account': 'Spiderman', 'method': 'online_score',
+         'token': '4de1853f30330c85fb3dc5fc5b1fb2239981e5e0fe1bcfb7137feee75eb9beeef21a63c4652ba576461d7fb60ec9083a7c3cb35345cdf3c798748bd287d975b2'},
+
+        {'login': 'Mary Jane', 'account': 'TV actress', 'method': 'clients_interests',
+         'token': 'dce3e3f520c9294c4ac7fd6e3434be2ed5de97423350f7c509f6321dc6c8a38fa386b1d8a9cbd2f27c6f9c8164e3e11fd369547d988123f31132a69c6e986de7'},
+
+        {'login': 'Yao Ming', 'account': 'Houston Rockets', 'method': 'online_score',
+         'token': 'f203215d025be91486e287252ff3895ebecd76f1f280faf7d2fee20610fad104dd60975cceadd4b30e40afeea70c0d66cbe5581edc7802674c07bad21c39bb5e'},
+
+        {'login': 'admin', 'account': 'admin', 'method': 'clients_interests',
+         'token': get_current_admin_token()},
     ])
     @mock.patch("api.MethodRequest", lambda _x, _y, body: body)
-    def test_no_arguments_in_request(self, request):
+    def test_no_arguments_in_request(self, storage):
+        request = create_request(storage)
         with self.assertRaises(NoArgumentsError):
             method_handler(request, self.context, [])
 
-    @cases([
-        {"body": add_method_to_request(create_auth_request, score_rate=1)(admin_rate=1)}
-        for _ in range(NUM_OF_AUTO_GENERATED_TEST_CASES)
-    ])
-    @mock.patch("api.MethodRequest", lambda _x, _y, body: body)
-    def test_admin_score_is_42(self, request):
-        self.assertEqual(method_handler(request, self.context, []),
-                         ({"score": 42}, OK))
-
-    """Functional test to test correctness of interests method request"""
-
-    @mock.patch("api.get_interests", func_test_interests)
-    def test_interest_handler_is_correct(self):
-        request = add_arguments_to_request(
-            add_method_to_request(
-                create_auth_request, score_rate=0
-            ),
-            is_score=False
-        )
-        response, code = method_handler(request(), self.context, self.store)
-        self.assertEqual(code, OK)
-        for key, value in response.items():
-            self.assertEqual(self.backup[key], json.dumps(value))
-
-    """Functional test to test correctness of online score method request"""
-
-    @mock.patch("api.get_score", func_test_scoring)
-    def test_score_handler_is_correct(self):
-        request = add_arguments_to_request(
-            add_method_to_request(
-                create_auth_request, score_rate=1
-            ),
-            is_score=True
-        )(admin_rate=0)
-
-        self.add_key_to_hash_key(request["body"])
-        response, code = method_handler(request, self.context, self.store)
-        self.assertEqual(code, OK)
-        self.assertEqual(response, {"score": 2})
+    """Test partial filled requests, which should cause errors"""
 
     @cases([
         {"body": {}},
@@ -570,6 +630,79 @@ class TestHandlers(unittest.TestCase):
     def test_empty_or_partial_filled_request(self, request):
         with self.assertRaises(TooMuchErrors):
             method_handler(request, self.context, self.store)
+
+    """END"""
+
+
+# -------------------- Functional testing class ------------------------ #
+
+class TestFunctionalOfApi(BasicTestClass):
+
+    def fulfill(self):
+        for i, interests in enumerate(THEIR_INTERESTS):
+            key, value = "%s%d" % (interest_prefix, i), json.dumps(interests)
+            self.backup.update({i: value})
+            self.store._Storage__setkey(key, value, TIME_OF_STORE)
+
+    """Functional test to test correctness of interests method request"""
+
+    @cases([
+        (
+                {'login': 'Peter Parker', 'account': 'Spiderman', 'method': 'clients_interests',
+                 "arguments": {"client_ids": [0, 1, 2, 3]},
+                 'token': '4de1853f30330c85fb3dc5fc5b1fb2239981e5e0fe1bcfb7137feee75eb9beeef21a63c4652ba576461d7fb60ec9083a7c3cb35345cdf3c798748bd287d975b2'},
+                dict(zip([0, 1, 2, 3], THEIR_INTERESTS[0:4])),
+        ),
+        (
+                {'login': 'admin', 'account': 'admin', 'method': 'clients_interests',
+                 "arguments": {"client_ids": [0, 1, 2]},
+                 'token': get_current_admin_token()},
+                dict(zip([0, 1, 2], THEIR_INTERESTS[0:3])),
+        ),
+    ])
+    @mock.patch("api.get_interests", func_test_interests)
+    def test_interest_handler_is_correct(self, storage, answers):
+        request = {"body": storage}
+        response, code = method_handler(request, self.context, self.store)
+        self.assertEqual(code, OK)
+        for key, value in response.items():
+            self.assertEqual(answers[key], value)
+
+    """Functional test to test correctness of online score method request"""
+
+    @cases([
+        (
+                {'login': 'Peter Parker', 'account': 'Spiderman', 'method': 'online_score',
+                 'arguments': {'first_name': 'Peter', 'last_name': 'Parker'},
+                 'token': '4de1853f30330c85fb3dc5fc5b1fb2239981e5e0fe1bcfb7137feee75eb9beeef21a63c4652ba576461d7fb60ec9083a7c3cb35345cdf3c798748bd287d975b2'},
+                .5,
+        ),
+        (
+                {'login': 'Mary Jane', 'account': 'TV actress', 'method': 'online_score',
+                 'arguments': {'first_name': 'Mary', 'last_name': 'Jane', 'gender': 2, 'birthday': '11.10.1965'},
+                 'token': 'dce3e3f520c9294c4ac7fd6e3434be2ed5de97423350f7c509f6321dc6c8a38fa386b1d8a9cbd2f27c6f9c8164e3e11fd369547d988123f31132a69c6e986de7'},
+                2.,
+        ),
+        (
+                {'login': 'Yao Ming', 'account': 'Houston Rockets', 'method': 'online_score',
+                 'arguments': {'height': 225, 'weight': '140', 'email': 'yao@ming.ch', 'phone': '77777777777'},
+                 'token': 'f203215d025be91486e287252ff3895ebecd76f1f280faf7d2fee20610fad104dd60975cceadd4b30e40afeea70c0d66cbe5581edc7802674c07bad21c39bb5e'},
+                3.,
+        ),
+        (
+                {'login': 'admin', 'account': 'admin', 'method': 'online_score',
+                 'arguments': {},
+                 'token': get_current_admin_token()},
+                42,
+        )
+    ])
+    @mock.patch("api.get_score", func_test_scoring)
+    def test_score_handler_is_correct(self, storage, score):
+        request = {"body": storage}
+        self.add_key_to_hash_key(request["body"])
+        response, code = method_handler(request, self.context, self.store)
+        self.assertEqual(code, OK)
+        self.assertEqual(response, {"score": score})
 
     def tearDown(self):
         self.store.connection.delete_multi(self.key_hash)
