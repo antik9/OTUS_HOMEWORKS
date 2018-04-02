@@ -7,8 +7,7 @@ from unittest import mock
 from functools import partial
 from abc import abstractmethod
 from api import \
-    ADMIN_LOGIN, ADMIN_SALT, SALT, \
-    OK, FORBIDDEN, \
+    ADMIN_SALT, OK, FORBIDDEN, \
     get_score, get_interests, method_handler, check_auth, \
     AbstractField, DateField, ArgumentsField, GenderField, BirthDayField, \
     ClientIDsField, CharField, PhoneField, EmailField, \
@@ -48,46 +47,6 @@ def cases(cases_):
     return wrapper
 
 
-def add_method_to_request(func, score_rate=.5):
-    """Decorator to add method to request. Thx, cap!"""
-
-    def wrapper(*args, **kwargs):
-        request = func(*args, **kwargs)
-        request.storage["method"] = "online_score" if random.random() < score_rate \
-            else "clients_interests"
-        return request
-
-    return wrapper
-
-
-def add_arguments_to_request(func, is_score=True):
-    """Decorator to add method to request. Thx, cap!"""
-
-    def wrapper(*args, **kwargs):
-        request = func(*args, **kwargs)
-        if is_score:
-            request.storage["arguments"] = {
-                "first_name": "".join(random.choices(ALPHABET,
-                                                     k=random.randint(5, 20))),
-                "last_name": "".join(random.choices(ALPHABET,
-                                                    k=random.randint(5, 20))),
-                "birthday": datetime.date(
-                    random.randint(2018 - 60, 2018 - 18),
-                    random.randint(1, 12),
-                    random.randint(1, 28),
-                ).strftime("%d.%m.%Y"),
-                "gender": random.randint(1, 3),
-            }
-        else:
-            request.storage["arguments"] = {
-                "client_ids": list(range(1, 11)),
-            }
-
-        return {"body": request.storage}
-
-    return wrapper
-
-
 score_prefix = "~test~get~score~:"
 interest_prefix = "~test~get~interests~:"
 func_test_scoring = partial(get_score, prefix=score_prefix, time_of_store=TIME_OF_STORE)
@@ -117,30 +76,6 @@ def get_current_admin_token():
     return hashlib.sha512(
         (datetime.datetime.now().strftime("%Y%m%d%H") +
          ADMIN_SALT).encode("utf-8")).hexdigest()
-
-
-def create_auth_request(valid=True, admin_rate=.3):
-    """Function to create valid/invalid request"""
-
-    is_admin = random.random() < admin_rate
-    request = AuthRequest()
-    if is_admin:
-        request.storage["login"] = ADMIN_LOGIN
-        request.storage["token"] = hashlib.sha512(
-            (datetime.datetime.now().strftime("%Y%m%d%H") +
-             ADMIN_SALT).encode("utf-8")).hexdigest()
-    else:
-        request.storage["login"] = "".join(
-            random.choices(ALPHABET, k=random.randint(5, 20)))
-        request.storage["account"] = "".join(
-            random.choices(ALPHABET, k=random.randint(5, 20)))
-        request.storage["token"] = hashlib.sha512(
-            (request.storage["account"] +
-             request.storage["login"] +
-             SALT).encode("utf-8")).hexdigest()
-    if not valid:
-        request.storage["token"] = request.storage["token"][:-1]
-    return request
 
 
 # ------------------- Test classes for all fields -------------------- #
@@ -703,12 +638,6 @@ class TestFunctionalOfApi(BasicTestClass):
         response, code = method_handler(request, self.context, self.store)
         self.assertEqual(code, OK)
         self.assertEqual(response, {"score": score})
-
-    def tearDown(self):
-        self.store.connection.delete_multi(self.key_hash)
-        self.store.connection.delete_multi(
-            map(lambda key: interest_prefix + str(key), self.backup.keys()))
-        self.store.connection.disconnect_all()
 
 
 # --------------------------- Main --------------------------- #
