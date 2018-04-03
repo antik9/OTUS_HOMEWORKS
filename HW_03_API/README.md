@@ -1,24 +1,31 @@
 # Third Homework Task
 ## Python API to POST requests to work with scoring and interests of users
 
+There are two ways to start this application correctly. Choosing first way you should install on your local machine key-value storage **memcached** and suitable library for python3. In this application python-memcached is used. Then change directory to api.
+
 Before you launch server you should start your localhost memcached to work with api. The command should be like this:
 ```
 memcached -p 11211 -d
 ```
 
+Choosing second way you can build and start docker container simply calling start.sh. All necessary libraries will be installed on build and memcached daemon will start automatically on run.
+```
+bash start.sh
+```
+
 To start HttpServer you should type 
 ```
-python3 api.py 
+python api.py 
 ```
 By default server is on 8080 port of your localhost, listen to memcached on port 11211 and there is no log file, all log information goes to stdout.
 If you want to change this configuration you can pass port and name of log file by their short and long options names like this:
 ```
-python3 api.py -p 8989
-python3 api.py --port 8989
-python3 api.py -m 11211
-python3 api.py --memcached 11211
-python3 api.py -l log.log
-python3 api.py --log log.log
+python api.py -p 8989
+python api.py --port 8989
+python api.py -m 11211
+python api.py --memcached 11211
+python api.py -l log.log
+python api.py --log log.log
 ```
 
 To create valid requests to working server you should choose a method which would you like to use.
@@ -79,7 +86,6 @@ curl -X POST -H "Content-Type: application/json" -d '{"account": "horns&hoofs", 
 
 To test application for correct work you should run **test.py** script. Choose which command do you like more:
 ```
-python3 test.py 
-pytest test.py
+python test.py 
 ```
 When you run this command application perform unit and functional tests on api.py.

@@ -17,7 +17,6 @@ from scoring import create_key_part
 
 # --------------------------- Constants ---------------------------- #
 
-ALPHABET = [chr(ch) for ch in range(ord('a'), ord('z'))]
 SOME_INTERESTS = ["football", "soccer", "music", "religion", "books", "relax", "leisure",
                   "nothing", "studying", "online-games", "joking"]
 POPULAR_NAMES = ["Peter Parker", "Mary Jane", "Yao Ming", "admin"]
@@ -326,7 +325,7 @@ class TestHandlers(unittest.TestCase):
     @mock.patch("api.MethodRequest.raise_error_if_there_are_some")
     def test_bad_init_method_request(self, arguments, errors, _):
         method_request = MethodRequest([], self.context, arguments)
-        self.assertListEqual(method_request.errors, errors)
+        self.assertSetEqual(set(method_request.errors), set(errors))
 
     """Test handler ClientsInterestsRequest"""
 
