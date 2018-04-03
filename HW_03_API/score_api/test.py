@@ -19,8 +19,7 @@ from scoring import create_key_part
 
 SOME_INTERESTS = ["football", "soccer", "music", "religion", "books", "relax", "leisure",
                   "nothing", "studying", "online-games", "joking"]
-POPULAR_NAMES = ["Peter Parker", "Mary Jane", "Yao Ming", "admin"]
-THEIR_INTERESTS = [
+POPULAR_INTERESTS = [
     ["web", "net"],
     ["spiders", "tv"],
     ["ball", "china"],
@@ -581,7 +580,7 @@ class TestFunctionalOfApi(unittest.TestCase):
         ))
 
     def fulfill(self):
-        for i, interests in enumerate(THEIR_INTERESTS):
+        for i, interests in enumerate(POPULAR_INTERESTS):
             key, value = "%s%d" % (interest_prefix, i), json.dumps(interests)
             self.backup.update({i: value})
             self.store._Storage__setkey(key, value, TIME_OF_STORE)
@@ -599,13 +598,13 @@ class TestFunctionalOfApi(unittest.TestCase):
                 {'login': 'Peter Parker', 'account': 'Spiderman', 'method': 'clients_interests',
                  "arguments": {"client_ids": [0, 1, 2, 3]},
                  'token': '4de1853f30330c85fb3dc5fc5b1fb2239981e5e0fe1bcfb7137feee75eb9beeef21a63c4652ba576461d7fb60ec9083a7c3cb35345cdf3c798748bd287d975b2'},
-                dict(zip([0, 1, 2, 3], THEIR_INTERESTS[0:4])),
+                dict(zip([0, 1, 2, 3], POPULAR_INTERESTS[0:4])),
         ),
         (
                 {'login': 'admin', 'account': 'admin', 'method': 'clients_interests',
                  "arguments": {"client_ids": [0, 1, 2]},
                  'token': get_current_admin_token()},
-                dict(zip([0, 1, 2], THEIR_INTERESTS[0:3])),
+                dict(zip([0, 1, 2], POPULAR_INTERESTS[0:3])),
         ),
     ])
     @mock.patch("api.get_interests", func_test_interests)
