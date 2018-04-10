@@ -6,10 +6,7 @@ import socket
 
 from optparse import OptionParser
 from socket import SO_REUSEADDR, SOL_SOCKET
-from time import mktime
 from threading import Thread
-from urllib.parse import unquote
-from wsgiref.handlers import format_date_time
 
 # -------------------------- Constants --------------------------- #
 
@@ -46,6 +43,29 @@ MIME_TYPES = {
     ".swf": "application/x-shockwave-flash",
     ".txt": "text/plain",
 }
+
+ESCAPED_CHARACTERS = {
+    '%20': ' ',
+    '%09': '\t',
+    '%0A': '\n',
+    '%0D': '\r',
+    '%08': '\b',
+}
+
+ESCAPE_PATTERN = r'%\w{2}'
+
+
+# ------------ Function to update ESCAPED_CHARACTERS ------------- #
+
+
+def update_escaped_chars(filename):
+    try:
+        with open(filename, "r") as url_chars_file:
+            for line in url_chars_file:
+                character, chr_code = line.split()
+                ESCAPED_CHARACTERS.update({chr_code: character})
+    except IOError:
+        pass
 
 
 # ------------------------ Server class -------------------------- #
@@ -125,9 +145,8 @@ class GetAndHeadServer:
         """
         :return: formatted date for response
         """
-        now = datetime.datetime.now()
-        stamp = mktime(now.timetuple())
-        return format_date_time(stamp)
+        now = datetime.datetime.utcnow()
+        return now.strftime("%a, %d %b %Y %X GMT")
 
     @staticmethod
     def parse_type(address):
@@ -154,7 +173,7 @@ class GetAndHeadServer:
                                          CODE_SPECIFICATION[code])
         response += "Date: {}\r\n".format(self.get_current_date())
         response += "Server: {}\r\n".format(self.__class__.__name__)
-        response += "Connection: Closed\r\n"
+        response += "Connection: Close\r\n"
 
         if code == OK:
             response += "Content-Length: {}\r\n".format(len(content))
@@ -178,7 +197,14 @@ class GetAndHeadServer:
         if real_address.startswith(self.basedir):
             if '?' in address:
                 return address[:address.find('?')]
-            return unquote(address)
+
+            # Replace escaped characters
+            percent_chars = re.findall(ESCAPE_PATTERN, address)
+            for percent_char in percent_chars:
+                address = address.replace(percent_char,
+                                          ESCAPED_CHARACTERS[percent_char.upper()])
+
+            return address
 
     def serve_forever(self):
         """Function to start server until it will be manually closed"""
@@ -211,7 +237,7 @@ if __name__ == "__main__":
     # Options from command line
     op = OptionParser()
     op.add_option("-l", "--log", action="store", default=None)
-    op.add_option("-p", "--port", action="store", type=int, default=9090)
+    op.add_option("-p", "--port", action="store", type=int, default=8000)
     op.add_option("-w", "--workers", action="store", type=int, default=2)
     op.add_option("-r", "--root_dir", action="store", default=DOCUMENT_ROOT)
     (opts, args) = op.parse_args()
@@ -226,7 +252,10 @@ if __name__ == "__main__":
     sock.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
     basedir = os.path.realpath(".") + opts.root_dir
     sock.bind(('', opts.port))
-    sock.listen(10)
+    sock.listen(1024)
+
+    # Add escaped characters fom file url_encode_characters
+    update_escaped_chars("url_encode_characters")
 
     # Threads
     for i in range(opts.workers):
