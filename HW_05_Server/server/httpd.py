@@ -44,28 +44,7 @@ MIME_TYPES = {
     ".txt": "text/plain",
 }
 
-ESCAPED_CHARACTERS = {
-    '%20': ' ',
-    '%09': '\t',
-    '%0A': '\n',
-    '%0D': '\r',
-    '%08': '\b',
-}
-
 ESCAPE_PATTERN = r'%\w{2}'
-
-
-# ------------ Function to update ESCAPED_CHARACTERS ------------- #
-
-
-def update_escaped_chars(filename):
-    try:
-        with open(filename, "r") as url_chars_file:
-            for line in url_chars_file:
-                character, chr_code = line.split()
-                ESCAPED_CHARACTERS.update({chr_code: character})
-    except IOError:
-        pass
 
 
 # ------------------------ Server class -------------------------- #
@@ -202,7 +181,7 @@ class GetAndHeadServer:
             percent_chars = re.findall(ESCAPE_PATTERN, address)
             for percent_char in percent_chars:
                 address = address.replace(percent_char,
-                                          ESCAPED_CHARACTERS[percent_char.upper()])
+                                          chr(int(percent_char[1:], 16)))
 
             return address
 
@@ -253,9 +232,6 @@ if __name__ == "__main__":
     basedir = os.path.realpath(".") + opts.root_dir
     sock.bind(('', opts.port))
     sock.listen(1024)
-
-    # Add escaped characters fom file url_encode_characters
-    update_escaped_chars("url_encode_characters")
 
     # Threads
     for i in range(opts.workers):
