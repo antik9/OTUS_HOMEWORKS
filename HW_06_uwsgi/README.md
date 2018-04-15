@@ -1,6 +1,6 @@
 ## IP2W api (ip to weather)
 
-To run ip2w api with uwsgi in Docker container run start.sh
+To run ip2w api with **uwsgi** in Docker container run start.sh
 ```
 ./start.sh
 ```
@@ -12,7 +12,7 @@ uwsgi --ini ip2w.ini
 
 ## Tests
 
-To test api run uwsgi application and then run tests.py with python
+To test api, run uwsgi application and then run **tests.py** with python
 ```
 python tests.py
 ```
@@ -29,7 +29,7 @@ To run system service
 sudo service ip2w start
 ```
 
-For correct work you should add location to your nginx.conf to proxy requests to ip2w socket
+For correct work you should add location to your **nginx.conf** to proxy requests to ip2w socket
 ```
  location /ip2w/ 
  {
