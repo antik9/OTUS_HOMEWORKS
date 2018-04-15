@@ -12,7 +12,7 @@ Requires(post): systemd
 Requires(preun): systemd
 Requires(postun): systemd
 BuildRequires: systemd
-Requires:       python3.6 uwsgi nginx
+Requires:       python uwsgi nginx
 Summary:        The ip to weather centos deamon
 
 %description
@@ -37,7 +37,8 @@ Git version: %{git_version} (branch: %{git_branch})
 
 
 %{__install} -pD -m 644 %{__pathwithsource}/server/%{name}.py %{buildroot}/%{__bindir}/%{name}.py
-%{__install} -pD -m 644 %{__pathwithsource}/server/%{name}.ini %{buildroot}/%{__etcdir}/%{name}.ini
+%{__install} -pD -m 644 %{__pathwithsource}/server/config.json %{buildroot}/%{__bindir}/config.json
+%{__install} -pD -m 644 %{__pathwithsource}/server/%{name}.ini %{buildroot}/%{__bindir}/%{name}.ini
 %{__install} -pD -m 644 %{__pathwithsource}/%{name}.service %{buildroot}/%{__systemddir}/%{name}.service
 
 %post

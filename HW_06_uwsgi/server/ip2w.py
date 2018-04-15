@@ -1,10 +1,9 @@
 import json
 import requests
 import logging
-import os
 import socket
 
-from urllib.parse import quote
+from urllib import quote
 
 # -------------------------- Constants --------------------------- #
 
@@ -13,7 +12,11 @@ IPINFO_URL = "http://ipinfo.io/{ip_address}"
 OPEN_WEATHER_URL = "http://api.openweathermap.org/data/2.5/weather?" \
                    "q={city},{country}&APPID={token}&lang=ru&units=metric"
 
-TOKEN = os.environ.get("OPEN_WEATHER_TOKEN")
+with open("config.json") as json_file:
+    CONFIG = json.load(json_file)
+
+TOKEN = CONFIG.get("TOKEN")
+LOG_FILE = CONFIG.get("LOG_FILE")
 
 OK = 200
 BAD_REQUEST = 400
@@ -34,7 +37,8 @@ class NoWeatherException(Exception):
 
 # -------------------- Logging configuration --------------------- #
 
-logging.basicConfig(format='[%(asctime)s] %(levelname)s %(message)s',
+logging.basicConfig(filename=LOG_FILE,
+                    format='[%(asctime)s] %(levelname)s %(message)s',
                     level=logging.INFO, datefmt='%Y.%m.%d %H:%M:%S')
 
 

@@ -2,23 +2,19 @@ FROM centos:latest
 
 LABEL maintainer="Anton Illarionov"
 
-ENV OPEN_WEATHER_TOKEN=35ee6b3244899f265cdbebde58d053f9
+RUN yum install -y epel-release
+RUN yum install -y nginx gcc wget curl screen vim git python-devel rpm-build
+RUN curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
+RUN python get-pip.py
+RUN rm get-pip.py 
+RUN pip install requests uwsgi
 
-# Install python3 and other utilities to work with
-RUN yum install -y https://centos7.iuscommunity.org/ius-release.rpm
-RUN yum install -y nginx gcc wget curl screen vim git \
- python36u python36u-devel.x86_64
-
-# Create virtualenv for py3
-RUN python3.6 -m venv /home/py36
-RUN /home/py36/bin/pip3 install requests uwsgi
-
-# Add current folder to container
-ADD . /home/HW_06_api
-WORKDIR /home/HW_06_api/server
+WORKDIR /home/
+RUN git clone http://github.com/antik9/OTUS_HOMEWORKS
+WORKDIR /home/OTUS_HOMEWORKS/HW_06_uwsgi
 
 # Change nginx.conf
-RUN mv /home/HW_06_api/nginx.conf /etc/nginx/nginx.conf
+RUN mv /home/OTUS_HOMEWORKS/HW_06_uwsgi/nginx.conf /etc/nginx/nginx.conf
 RUN mkdir /run/uwsgi
 
 # Open 80 port from container
@@ -26,5 +22,4 @@ EXPOSE 80
 
 ENTRYPOINT /usr/sbin/nginx \
  && /bin/bash 
-# && source /home/py36/bin/activate 
 

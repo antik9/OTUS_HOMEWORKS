@@ -1,6 +1,7 @@
 .idea/
 _*
 .requests/
+.Dockerfile
 .cache
 *pyc
 !__init__.py
