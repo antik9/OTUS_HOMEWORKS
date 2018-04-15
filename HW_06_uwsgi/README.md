@@ -29,7 +29,7 @@ To run system service
 sudo service ip2w start
 ```
 
-For correct work you should add location to your **nginx.conf** to proxy requests to ip2w socket
+For correct work you should add new location to your **nginx.conf** to proxy requests to ip2w socket
 ```
  location /ip2w/ 
  {
