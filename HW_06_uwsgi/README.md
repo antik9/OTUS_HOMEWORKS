@@ -21,7 +21,12 @@ python tests.py
 
 ## ip2w rpm package
 
-Also you can install rmp package **ip2w-0.0.1-1.noarch.rpm** to your system and run api in daemon mode.
+To build rpm package you should run **buildrpm.sh** in HW_06_uwsgi path
+```
+bash buildrpm.sh ip2w.spec
+```
+
+To install rpm package on system run
 ```
 sudo rpm -i ip2w-0.0.1-1.noarch.rpm
 ```
