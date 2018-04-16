@@ -18,6 +18,8 @@ TOKEN = os.environ.get("OPEN_WEATHER_TOKEN")
 if not TOKEN:
     sys.exit("Provide OPEN_WEATHER_TOKEN for correct work of application")
 
+LOG_FILE = None
+
 OK = 200
 BAD_REQUEST = 400
 BAD_GATEWAY = 502
@@ -34,14 +36,11 @@ ERRORS = {
 try:
     with open("/usr/local/etc/config_ip2w.json") as json_file:
         CONFIG = json.load(json_file)
-except FileNotFoundError:
-    try:
-        with open("config_ip2w.json") as json_file:
-            CONFIG = json.load(json_file)
-    except FileNotFoundError:
-        pass
+except IOError:
+    pass
 
-LOG_FILE = CONFIG.get("LOG_FILE")
+if locals().get("CONFIG"):
+    LOG_FILE = CONFIG.get("LOG_FILE")
 
 
 # -------------------------- Exceptions -------------------------- #

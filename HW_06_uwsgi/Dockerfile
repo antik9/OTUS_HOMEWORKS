@@ -10,10 +10,15 @@ RUN yum install -y epel-release \
  && pip install requests uwsgi
 
 WORKDIR /home/
+RUN echo
 RUN git clone http://github.com/antik9/OTUS_HOMEWORKS
 
 # Change nginx.conf
 RUN mv /home/OTUS_HOMEWORKS/HW_06_uwsgi/nginx.conf /etc/nginx/nginx.conf \
+ && cp /home/OTUS_HOMEWORKS/HW_06_uwsgi/server/config_ip2w.json /usr/local/etc/config_ip2w.json \
+ && cp /home/OTUS_HOMEWORKS/HW_06_uwsgi/server/ip2w.py /usr/local/bin/ip2w.py \
+ && touch /var/log/ip2w_py.log \
+ && chmod a+w /var/log/ip2w_py.log \
  && mkdir /run/uwsgi
 
 # Open 80 port from container
