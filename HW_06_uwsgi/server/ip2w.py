@@ -1,7 +1,9 @@
 import json
-import requests
 import logging
+import os
+import requests
 import socket
+import sys
 
 from urllib import quote
 
@@ -12,11 +14,9 @@ IPINFO_URL = "http://ipinfo.io/{ip_address}"
 OPEN_WEATHER_URL = "http://api.openweathermap.org/data/2.5/weather?" \
                    "q={city},{country}&APPID={token}&lang=ru&units=metric"
 
-with open("config.json") as json_file:
-    CONFIG = json.load(json_file)
-
-TOKEN = CONFIG.get("TOKEN")
-LOG_FILE = CONFIG.get("LOG_FILE")
+TOKEN = os.environ.get("OPEN_WEATHER_TOKEN")
+if not TOKEN:
+    sys.exit("Provide OPEN_WEATHER_TOKEN for correct work of application")
 
 OK = 200
 BAD_REQUEST = 400
@@ -27,6 +27,21 @@ ERRORS = {
     BAD_REQUEST: "Bad Request",
     BAD_GATEWAY: "Bad Gateway",
 }
+
+# --------------------- Configuration file ----------------------- #
+
+
+try:
+    with open("/usr/local/etc/config_ip2w.json") as json_file:
+        CONFIG = json.load(json_file)
+except FileNotFoundError:
+    try:
+        with open("config_ip2w.json") as json_file:
+            CONFIG = json.load(json_file)
+    except FileNotFoundError:
+        pass
+
+LOG_FILE = CONFIG.get("LOG_FILE")
 
 
 # -------------------------- Exceptions -------------------------- #
@@ -58,7 +73,7 @@ def application(env, start_response):
                                    "Wrong format of ip {}".format(ip_address),
                                    start_response)
     try:
-        city, country = get_geo(IPINFO_URL.format(ip_address=ip_address))
+        city, country = get_geo(ip_address)
     except requests.exceptions.ConnectionError as e:
         logging.exception(e)
         return response_with_error(BAD_GATEWAY, "Cannot connect to IpInfo",
@@ -71,9 +86,7 @@ def application(env, start_response):
 
     try:
         temperature, conditions = \
-            get_weather(OPEN_WEATHER_URL.format(city=quote(city),
-                                                country=country,
-                                                token=TOKEN))
+            get_weather(city, country)
     except NoWeatherException as e:
         logging.exception(e)
         return response_with_error(BAD_REQUEST,
@@ -103,22 +116,29 @@ def check_correct_url(ip_address_):
         return False
 
 
-def get_geo(url):
+def get_geo(ip_address):
     """
-    :param url:
+    :param ip_address:
     :return: dictionary with information about city and country
     ip in url belongs to
     """
+    url = IPINFO_URL.format(ip_address=ip_address)
     geo_info = requests.get(url).json()
     return geo_info.get("city"), geo_info.get("country")
 
 
-def get_weather(url):
+def get_weather(city, country):
     """
-    :param url:
+    :param city: city for which we want weather to know
+    :param country: country needed to uniquely identify city
     :return: dictionary with information about temperature and weather
     conditions in city which passed in url
     """
+
+    url = OPEN_WEATHER_URL.format(city=quote(city),
+                                  country=country,
+                                  token=TOKEN)
+
     weather_info = requests.get(url).json()
 
     try:

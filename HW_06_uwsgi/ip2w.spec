@@ -20,11 +20,11 @@ The daemon respond to GET requests with json-formatted weather info
 
 Git version: %{git_version} (branch: %{git_branch})
 
-%define __etcdir    /usr/local/etc
-%define __logdir    /val/log/
-%define __bindir    /usr/local/ip2w/
+%define __etcdir    /usr/local/etc/
+%define __logdir    /var/log/
+%define __bindir    /usr/local/bin/
 %define __systemddir    /usr/lib/systemd/system/
-%define __pathwithsource        /home/HW_06_api/
+%define __pathwithsource        /home/OTUS_HOMEWORKS/HW_06_api/
 
 %prep
 
@@ -37,8 +37,8 @@ Git version: %{git_version} (branch: %{git_branch})
 
 
 %{__install} -pD -m 644 %{__pathwithsource}/server/%{name}.py %{buildroot}/%{__bindir}/%{name}.py
-%{__install} -pD -m 644 %{__pathwithsource}/server/config.json %{buildroot}/%{__bindir}/config.json
-%{__install} -pD -m 644 %{__pathwithsource}/server/%{name}.ini %{buildroot}/%{__bindir}/%{name}.ini
+%{__install} -pD -m 644 %{__pathwithsource}/server/config.json %{buildroot}/%{__etcdir}/config.json
+%{__install} -pD -m 644 %{__pathwithsource}/server/%{name}.ini %{buildroot}/%{__etcdir}/%{name}.ini
 %{__install} -pD -m 644 %{__pathwithsource}/%{name}.service %{buildroot}/%{__systemddir}/%{name}.service
 
 %post

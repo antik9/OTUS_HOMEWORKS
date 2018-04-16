@@ -5,7 +5,9 @@ To run ip2w api with **uwsgi** in Docker container run start.sh
 ./start.sh
 ```
 
-In container run uwsgi service with
+If you deploy this application on your local machine to run server you should change dir to **server/**.
+In container you by default start at **server/**.
+Than you should run uwsgi service with
 ```
 uwsgi --ini ip2w.ini
 ```

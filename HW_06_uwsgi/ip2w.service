@@ -3,7 +3,7 @@ Description=uWSGI instance to serve ip2w
 
 [Service]
 ExecStartPre=-/usr/bin/bash -c 'mkdir -p /run/uwsgi; chown nginx /run/uwsgi'
-ExecStart=/usr/bin/bash -c 'cd /usr/local/ip2w; uwsgi --ini ip2w.ini'
+ExecStart=/usr/bin/bash -c 'cd /usr/local/etc/; uwsgi --ini ip2w.ini'
 
 [Install]
 WantedBy=multi-user.target
