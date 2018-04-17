@@ -65,4 +65,4 @@ systemctl daemon-reload
 %{__bindir}
 %{__systemddir}
 %{__etcdir}
-
+%{__nginxconfdir}
