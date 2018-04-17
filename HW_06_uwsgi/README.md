@@ -5,7 +5,13 @@ To run ip2w api with **uwsgi** in Docker container run start.sh
 >>> ./start.sh
 ```
 
-If you deploy this application on your local machine to run server you should change dir to **server/**.</br>
+This application needed token for work with **openweathermap.org**. You should add token to your environment to **OPEN_WEATHER_TOKEN** variable
+```
+>>> OPEN_WEATHER_TOKEN={your_token}
+>>> export OPEN_WEATHER_TOKEN
+```
+
+If you deploy this application on your local machine to run server you should change working directory to **server/**.</br>
 In container you by default start at **server/**.</br>
 Then you should run uwsgi service with
 ```
