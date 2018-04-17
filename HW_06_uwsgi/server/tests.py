@@ -34,7 +34,7 @@ class TestAPI(unittest.TestCase):
     ])
     def test_correct_city(self, ip_address, city_correct):
         """Is returned city correct?"""
-        city, country = get_geo(IPINFO_URL.format(ip_address=ip_address))
+        city, country = get_geo(ip_address=ip_address)
         self.assertEqual(city, city_correct)
 
     @cases([
