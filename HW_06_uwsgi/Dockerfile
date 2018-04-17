@@ -3,7 +3,7 @@ FROM centos:latest
 LABEL maintainer="Anton Illarionov"
 
 RUN yum install -y epel-release \
- && yum install -y nginx gcc wget curl screen vim git python-devel rpm-build \
+ && yum install -y nginx gcc wget curl screen git python-devel rpm-build \
  && curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py" \
  && python get-pip.py \
  && rm get-pip.py \

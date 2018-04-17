@@ -24,9 +24,11 @@ Git version: %{git_version} (branch: %{git_branch})
 %define __logdir    /var/log/
 %define __bindir    /usr/local/bin/
 %define __systemddir    /usr/lib/systemd/system/
-%define __pathwithsource        /home/OTUS_HOMEWORKS/HW_06_uwsgi/
+%define __nginxconfdir 	/etc/nginx/sites-available/
 
 %prep
+
+%setup -n otus-%{current_datetime}
 
 %install
 [ "%{buildroot}" != "/" ] && rm -fr %{buildroot}
@@ -34,12 +36,16 @@ Git version: %{git_version} (branch: %{git_branch})
 %{__mkdir} -p %{buildroot}/%{__etcdir}
 %{__mkdir} -p %{buildroot}/%{__bindir}
 %{__mkdir} -p %{buildroot}/%{__logdir}
+%{__mkdir} -p %{buildroot}/%{__nginxconfdir}
 
 
-%{__install} -pD -m 644 %{__pathwithsource}/server/%{name}.py %{buildroot}/%{__bindir}/%{name}.py
-%{__install} -pD -m 644 %{__pathwithsource}/server/config_%{name}.json %{buildroot}/%{__etcdir}/config_%{name}.json
-%{__install} -pD -m 644 %{__pathwithsource}/server/%{name}.ini %{buildroot}/%{__etcdir}/%{name}.ini
-%{__install} -pD -m 644 %{__pathwithsource}/%{name}.service %{buildroot}/%{__systemddir}/%{name}.service
+%{__install} -pD -m 644 server/%{name}.py %{buildroot}/%{__bindir}/%{name}.py
+%{__install} -pD -m 644 server/config_%{name}.json %{buildroot}/%{__etcdir}/config_%{name}.json
+%{__install} -pD -m 644 server/%{name}.ini %{buildroot}/%{__etcdir}/%{name}.ini
+%{__install} -pD -m 644 %{name}.service %{buildroot}/%{__systemddir}/%{name}.service
+%{__install} -pD -m 644 nginx_%{name}.conf %{buildroot}/%{__nginxconfdir}/nginx_%{name}.conf
+
+
 
 %post
 %systemd_post %{name}.service
@@ -53,7 +59,6 @@ systemctl daemon-reload
 
 %clean
 [ "%{buildroot}" != "/" ] && rm -fr %{buildroot}
-
 
 %files
 %{__logdir}
