@@ -14,7 +14,7 @@ RUN git clone http://github.com/antik9/OTUS_HOMEWORKS
 
 # Change nginx.conf
 RUN  cp /home/OTUS_HOMEWORKS/HW_06_uwsgi/nginx_ip2w.conf /etc/nginx/conf.d/nginx_ip2w.conf \
- && sed -i 's:default::' /etc/nginx/nginx.conf \
+ && sed -i 's:default_server::' /etc/nginx/nginx.conf \
  && cp /home/OTUS_HOMEWORKS/HW_06_uwsgi/server/config_ip2w.json /usr/local/etc/config_ip2w.json \
  && cp /home/OTUS_HOMEWORKS/HW_06_uwsgi/server/ip2w.py /usr/local/bin/ip2w.py \
  && mkdir /run/uwsgi
