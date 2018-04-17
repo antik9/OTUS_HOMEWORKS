@@ -18,11 +18,6 @@ Then you should run uwsgi service with
 >>> uwsgi --ini ip2w.ini
 ```
 
-## Requests
-
-To make request to your service you can use curl utility.
-```
-
 ## Tests
 
 To test api, run uwsgi application and then run **tests.py** with python
