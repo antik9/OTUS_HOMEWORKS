@@ -42,13 +42,17 @@ To run system service
 >>> sudo service ip2w start
 ```
 
-For correct work you should add new location to your **nginx.conf** to proxy requests to ip2w socket
+For correct work you should include nginx server config for ip2w to your nginx configuration. You can type in your **/etc/nginx/nginx.conf**:
 ```
  location /ip2w/ 
  {
       include uwsgi_params;
       uwsgi_pass unix:/run/uwsgi/app.sock;
  }
+ ```
+ or you can create symbolic link to server config after installation. Server config lies at **/etc/nginx/sites-available/nginx_ip2w.conf**. To create link run
+ ```
+ ln -s /etc/nginx/sites-available/nginx_ip2w.conf {folder-which-included-to-your-nginx-config}
  ```
 
 ## Requests
