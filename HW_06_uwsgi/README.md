@@ -52,7 +52,7 @@ For correct work you should include nginx server config for ip2w to your nginx c
  ```
  or you can create symbolic link to server config after installation. Server config lies at **/etc/nginx/sites-available/nginx_ip2w.conf**. To create link run
  ```
- ln -s /etc/nginx/sites-available/nginx_ip2w.conf {folder-which-included-to-your-nginx-config}
+>>> sudo ln -s /etc/nginx/sites-available/nginx_ip2w.conf {folder-which-included-to-your-nginx-config}
  ```
 
 ## Requests
