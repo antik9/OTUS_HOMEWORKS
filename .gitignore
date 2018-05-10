@@ -5,3 +5,7 @@ _*
 .cache
 *pyc
 !__init__.py
+
+HW_07_Hasker/
+HW_08_LogReg/**/.*
+HW_08_LogReg/*.pdf
