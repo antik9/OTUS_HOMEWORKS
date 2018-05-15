@@ -71,7 +71,7 @@ class LogisticRegression:
 
         # Proba is probability of class 1, y_proba is vector of probabilities
         # of class 0 and class 1
-        proba = (1 / (1 + np.exp(-X.dot(self.w))))
+        proba = self.sigmoid(X)
         y_proba = np.vstack((1 - proba, proba)).T
 
         return y_proba
@@ -105,17 +105,15 @@ class LogisticRegression:
         - loss as single float
         - gradient with respect to weights w; an array of same shape as w
         """
-        dw = np.zeros_like(self.w)  # initialize the gradient as zero
-        loss = 0
         # Compute loss and gradient. Your code should not contain python loops.
         # Loss = y * log(sigm(-w * x)) + (1 - y) * log(1 - sigm(-w * x))
 
-        _sigmoid = self.sigmoid(X_batch)
+        exp_x_dot_w = np.exp(-X_batch.dot(self.w))
 
-        first_part = y_batch * np.log(1 / (1 + _sigmoid))
+        first_part = y_batch * np.log(1 / (1 + exp_x_dot_w))
         first_part = first_part[~np.isnan(first_part)]
 
-        second_part = (1 - y_batch) * np.log(1 / (1 - _sigmoid))
+        second_part = (1 - y_batch) * np.log(1 / (1 - exp_x_dot_w))
         second_part = second_part[~np.isnan(second_part)]
 
         loss = np.mean(first_part) + np.mean(second_part)
@@ -137,12 +135,12 @@ class LogisticRegression:
 
         return loss, dw
 
-    def sigmoid(self, X_batch):
+    def sigmoid(self, X):
         """
-        :param X_batch: 
-        :return: sigmoid of batch values
+        :param X:
+        :return: sigmoid values
         """
-        return np.exp(-X_batch.dot(self.w))
+        return 1 / (1 + np.exp(-X.dot(self.w)))
 
     @staticmethod
     def append_biases(X):
