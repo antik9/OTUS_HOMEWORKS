@@ -110,10 +110,12 @@ class LogisticRegression:
         # Compute loss and gradient. Your code should not contain python loops.
         # Loss = y * log(sigm(-w * x)) + (1 - y) * log(1 - sigm(-w * x))
 
-        first_part = y_batch * np.log(1 / (1 + np.exp(-X_batch.dot(self.w))))
+        _sigmoid = self.sigmoid(X_batch)
+
+        first_part = y_batch * np.log(1 / (1 + _sigmoid))
         first_part = first_part[~np.isnan(first_part)]
 
-        second_part = (1 - y_batch) * np.log(1 / (1 - np.exp(-X_batch.dot(self.w))))
+        second_part = (1 - y_batch) * np.log(1 / (1 - _sigmoid))
         second_part = second_part[~np.isnan(second_part)]
 
         loss = np.mean(first_part) + np.mean(second_part)
@@ -134,6 +136,13 @@ class LogisticRegression:
         dw[:-1] += self.w[:-1] * reg
 
         return loss, dw
+
+    def sigmoid(self, X_batch):
+        """
+        :param X_batch: 
+        :return: sigmoid of batch values
+        """
+        return np.exp(-X_batch.dot(self.w))
 
     @staticmethod
     def append_biases(X):
