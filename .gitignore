@@ -10,5 +10,6 @@ _*
 HW_07_Hasker/
 HW_08_LogReg/**/.*
 HW_08_LogReg/*.pdf
-HW_09_Concurrency/.*
-HW_09_Concurrency/log.log
+HW_09_Pandas/.*
+HW_10_Concurrency/.*
+HW_10_Concurrency/log.log
