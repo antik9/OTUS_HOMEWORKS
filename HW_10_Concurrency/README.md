@@ -8,10 +8,10 @@ To up docker container with all dependencies within it run
 make
 ```
 By default it executes **make build_docker** in Makefile. 
-It creates new image **hw_09_concurrency** and runs it interactively.
+It creates new image **hw_10_concurrency** and runs it interactively.
 
 To run application you should have all **.tsv.gz** files in your running folder and 
-then run
+then run:
 ```angular2html
 make start
 ```
