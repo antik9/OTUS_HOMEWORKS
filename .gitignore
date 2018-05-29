@@ -3,9 +3,12 @@ _*
 .requests/
 .Dockerfile
 .cache
+.gitignore
 *pyc
 !__init__.py
 
 HW_07_Hasker/
 HW_08_LogReg/**/.*
 HW_08_LogReg/*.pdf
+HW_09_Concurrency/.*
+HW_09_Concurrency/log.log
