@@ -34,8 +34,7 @@ class MockMem:
             Function update storage of client,
             analogue of memcached store key-value pairs
             """
-            for key, value in package.items():
-                self.storage[key] = value
+            self.storage.update(package)
             return []
 
 
