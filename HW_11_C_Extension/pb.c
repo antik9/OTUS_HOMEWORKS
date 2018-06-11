@@ -9,10 +9,6 @@
 #define MAGIC  0xFFFFFFFF
 #define DEVICE_APPS_TYPE 1
 
-#define MAX_FD 10
-gzFile gz_files_array[MAX_FD] = { NULL };
-
-
 typedef struct pbheader_s {
     uint32_t magic;
     uint16_t type;
@@ -23,7 +19,7 @@ typedef struct pbheader_s {
 /* State for creating buffer iterator */
 typedef struct {
     PyObject_HEAD
-    Py_ssize_t gz_file_idx;
+    PyObject *gz_file;
 } BufIterState;
 
 /* Initialize new iterator with index in gz_files_array to open gzFile */
@@ -31,35 +27,23 @@ static PyObject *
 bufiter_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 {
     char *filename;
-    Py_ssize_t gz_file_idx;
+    PyObject *gz_file;
 
-    /* Find NULL in file descriptors array */
-    for (gz_file_idx = 0; gz_file_idx < MAX_FD; ++gz_file_idx) {
-        if ( gz_files_array[gz_file_idx] == NULL )
-            break;
-    }   
-    
-    if ( gz_file_idx == MAX_FD ) {
-        PyErr_SetString(PyExc_IOError, "Too many open file descriptors");
-        return NULL;
-    }
-    
     /* Get filename from args */
     if ( !PyArg_ParseTuple(args, "s", &filename) ) {
         return NULL;
     } else {
-        gz_files_array[gz_file_idx] = gzopen(filename, "r6h");
+        gz_file = PyCapsule_New((void*) gzopen(filename, "r6h"), NULL, NULL);
     }
     
     /* Create new iterator */
     BufIterState *bistate = (BufIterState *) type->tp_alloc(type, 0);
     if ( !bistate ) {
-        gzclose(gz_files_array[gz_file_idx]);
-        gz_files_array[gz_file_idx] = NULL;
+        gzclose((gzFile) PyCapsule_GetPointer(gz_file, NULL));
         return NULL;
     }
 
-    bistate->gz_file_idx = gz_file_idx;
+    bistate->gz_file = gz_file;
 
     return (PyObject *)bistate;
 }
@@ -67,9 +51,8 @@ bufiter_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 
 static void
 bufiter_dealloc(BufIterState *bistate) {
-    /* Close open descriptor and set its position in array to NULL */
-    gzclose(gz_files_array[bistate->gz_file_idx]);
-    gz_files_array[bistate->gz_file_idx] = NULL;
+    /* Close open descriptor */
+    gzclose((gzFile) PyCapsule_GetPointer(bistate->gz_file, NULL));
 }
 
 
@@ -109,7 +92,7 @@ parse_device(char *buf, int length) {
      PyObject *apps;
      apps = PyList_New(0);
 
-     for (int i = 0; i < msg->n_apps; ++i) {
+     for (size_t i = 0; i < msg->n_apps; ++i) {
          PyObject *app = PyInt_FromLong(msg->apps[i]);
          PyList_Append(apps, app);
      }
@@ -122,7 +105,7 @@ parse_device(char *buf, int length) {
 static PyObject *
 bufiter_next(BufIterState *bistate)
 {
-    gzFile gz_file = gz_files_array[bistate->gz_file_idx];
+    gzFile gz_file = (gzFile) PyCapsule_GetPointer(bistate->gz_file, NULL);
     pbheader_t next_header;
     int ret;
     
@@ -184,6 +167,15 @@ PyTypeObject BufIter_Type = {
     0,                              /* tp_init */
     PyType_GenericAlloc,            /* tp_alloc */
     bufiter_new,                    /* tp_new */
+    0,	            			    /* tp_free */
+    0,				                /* tp_is_gc */
+    0, 				                /* *tp_bases */
+    0,			                    /* *tp_mro */
+    0,          				    /* *tp_cache */
+    0, 		            		    /* *tp_subclasses */
+    0,                        	    /* *tp_weaklist */
+    0, 				                /* tp_del */
+    0, 		            		    /* tp_version_tag */
 };
 
 
@@ -252,7 +244,7 @@ size_t write_app(PyObject *app, gzFile gz_file) {
     msg.n_apps = PyList_Size(pobj_apps);
     msg.apps = malloc(sizeof(uint32_t) * msg.n_apps);
 
-    for (int i = 0; i < msg.n_apps; ++i) {
+    for (size_t i = 0; i < msg.n_apps; ++i) {
         PyObject *pobj_app_num = PyList_GetItem(pobj_apps, i);
         msg.apps[i] = PyInt_AsLong(pobj_app_num);
     }
@@ -289,7 +281,7 @@ static PyObject* py_deviceapps_xwrite_pb(PyObject* self, PyObject* args) {
         return NULL;
 
     gzFile gz_file;
-    if ( Z_NULL == (gz_file = gzopen(path, "w6h")) ) {
+    if ( Z_NULL == (gz_file = gzopen(path, "w7h")) ) {
         PyErr_SetString(PyExc_IOError, "Cannot open file");
         return 0;
     }
@@ -303,7 +295,7 @@ static PyObject* py_deviceapps_xwrite_pb(PyObject* self, PyObject* args) {
         return NULL;
     }
 
-    while ( app = PyIter_Next(iterator) ) {
+    while ( (app = PyIter_Next(iterator)) ) {
         num_bytes += write_app(app, gz_file);
         if ( PyErr_Occurred() ) {
             gzclose(gz_file);
@@ -314,7 +306,7 @@ static PyObject* py_deviceapps_xwrite_pb(PyObject* self, PyObject* args) {
 
     Py_DECREF(iterator);
 
-    printf("Write to: %s %ld bytes\n", path, num_bytes);
+    printf("Write to %s %ld bytes\n", path, num_bytes);
     gzclose(gz_file);
 
     return PyInt_FromLong(num_bytes);
@@ -337,5 +329,4 @@ static PyMethodDef PBMethods[] = {
 PyMODINIT_FUNC initpb(void) {
     (void) Py_InitModule("pb", PBMethods);
 }
-
 

@@ -27,13 +27,15 @@ class TestPB(unittest.TestCase):
         bytes_written = pb.deviceapps_xwrite_pb(self.deviceapps, TEST_FILE)
         self.assertTrue(bytes_written > 0)
         with gzip.open(TEST_FILE) as gz_file:
-            magic, dev_type, length = unpack("<Ihh", gz_file.read(HEADER_SIZE))
-            self.assertEqual(magic, MAGIC)
-            self.assertEqual(dev_type, DEVICE_APPS_TYPE)
-            _ = gz_file.read(length)
+            for _ in range(len(self.deviceapps)):
+                magic, dev_type, length = unpack("<Ihh", gz_file.read(HEADER_SIZE))
+                self.assertEqual(magic, MAGIC)
+                self.assertEqual(dev_type, DEVICE_APPS_TYPE)
+                _ = gz_file.read(length)
+
 
     def test_read(self):
         pb.deviceapps_xwrite_pb(self.deviceapps, TEST_FILE)
         for i, d in enumerate(pb.deviceapps_xread_pb(TEST_FILE)):
-            self.assertEqual(d, self.deviceapps[i])
-
+            for key, value in self.deviceapps[i].items():
+                self.assertEqual(value, d[key])

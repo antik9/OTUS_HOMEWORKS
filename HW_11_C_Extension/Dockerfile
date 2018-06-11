@@ -16,6 +16,8 @@ RUN set -xe \
 
 ADD . /tmp/otus
 
+EXPOSE 8080
+
 WORKDIR /tmp/otus
 
 ENTRYPOINT ulimit -c unlimited \
