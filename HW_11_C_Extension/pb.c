@@ -19,7 +19,7 @@ typedef struct pbheader_s {
 /* State for creating buffer iterator */
 typedef struct {
     PyObject_HEAD
-    PyObject *gz_file;
+    PyObject *gz_file;      // PyCapsule PyObject
 } BufIterState;
 
 /* Initialize new iterator with index in gz_files_array to open gzFile */
@@ -167,15 +167,15 @@ PyTypeObject BufIter_Type = {
     0,                              /* tp_init */
     PyType_GenericAlloc,            /* tp_alloc */
     bufiter_new,                    /* tp_new */
-    0,	            			    /* tp_free */
-    0,				                /* tp_is_gc */
-    0, 				                /* *tp_bases */
-    0,			                    /* *tp_mro */
-    0,          				    /* *tp_cache */
-    0, 		            		    /* *tp_subclasses */
-    0,                        	    /* *tp_weaklist */
-    0, 				                /* tp_del */
-    0, 		            		    /* tp_version_tag */
+    0,                              /* tp_free */
+    0,                              /* tp_is_gc */
+    0,                              /* *tp_bases */
+    0,                              /* *tp_mro */
+    0,                              /* *tp_cache */
+    0,                              /* *tp_subclasses */
+    0,                              /* *tp_weaklist */
+    0,                              /* tp_del */
+    0,                              /* tp_version_tag */
 };
 
 
