@@ -204,14 +204,13 @@ class Crawler:
         """
         Function to get http response and write it to the file
         """
-        html = None
         async with async_timeout.timeout(self.timeout):
             async with aiohttp.ClientSession() as session:
                 if not link.startswith('http'):
                     link = HOME_PAGE + link
                 async with session.get(link) as response:
                     if link.endswith('pdf'):
-                       file_name = file_name[:-4] + 'pdf'
+                        file_name = file_name[:-4] + 'pdf'
                     with open(file_name, 'wb') as wfile:
                         logging.info("WRITING TO {}".format(file_name))
                         async for data, _ in response.content.iter_chunks():
