@@ -1,4 +1,4 @@
-## Python Crawker for news.ycombinator.com
+## Python Crawler for news.ycombinator.com
 
 This crawler is intended for downloading news from index page of ycombinator. 
 It downloads content of links of top-30 news on index page and contents of all links in comments to that news.
@@ -19,7 +19,7 @@ By default the crawler has refresh timeout 60 seconds, 5 parsers and 10 download
 All parameters:
 
 | Short opt | Long opt | Description |
-|:---:|:---:|:---:|:---:|
+|:---:|:---:|:---:|
 | -p | --parsers | *number of parsers of html pages* |
 | -d | --downloaders | *number of downloaders for http requests* |
 | -l | --logfile | *name of logging file* |
