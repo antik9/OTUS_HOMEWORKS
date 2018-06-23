@@ -7,6 +7,7 @@ import logging
 import os
 import re
 
+from collections import deque
 from datetime import datetime
 from html import unescape
 from optparse import OptionParser
@@ -36,7 +37,7 @@ class Crawler:
     """
 
     def __init__(self, queue, download_queue, opts):
-        self.headers = set()                    # Set for storing processed news
+        self.headers = deque(maxlen=30)         # Set for storing processed news
         self.queue = queue                      # Queue to communicate between fetcher/handlers
         self.download_queue = download_queue    # Queue to communicate between handlers/downloaders
         self.timeout = opts.timeout             # Timeout for asyncio wait for response
@@ -74,11 +75,7 @@ class Crawler:
         """
         dir_name = os.path.join(self.basedir,
                                 self.get_dir_name_for_news(news))
-        try:
-            os.makedirs(dir_name)
-        except FileExistsError:
-            logging.exception("EXCEPTION, directory aldready exists {dir}".format(
-                dir=dir_name))
+        os.makedirs(dir_name, exist_ok=True)
         return dir_name
 
     async def download_site(self):
@@ -88,21 +85,18 @@ class Crawler:
         on the local system.
         """
         while True:
-            while not self.download_queue.empty():
-                file_name, link = self.download_queue.get_nowait()
-                try:
-                    await self.write_to_file(file_name, link)
-                    logging.info("SUCCESS LINK {link}".format(link=link))
-                except asyncio.TimeoutError:
-                    logging.exception("EXCEPTION timeout error for {link}".format(
-                        link=link))
-                except Exception:
-                    logging.exception("EXCEPTION unknown error for {link}".format(
-                        link=link))
-                finally:
-                    self.download_queue.task_done()
-
-            await self.take_a_nap(1)
+            file_name, link = await self.download_queue.get()
+            try:
+                await self.write_to_file(file_name, link)
+                logging.info("SUCCESS LINK {link}".format(link=link))
+            except asyncio.TimeoutError:
+                logging.exception("EXCEPTION timeout error for {link}".format(
+                    link=link))
+            except Exception:
+                logging.exception("EXCEPTION unknown error for {link}".format(
+                    link=link))
+            finally:
+                self.download_queue.task_done()
 
     async def get_comment_links(self, element_id, news_dir):
         """
@@ -155,8 +149,8 @@ class Crawler:
 
         if html:
             top_30 = re.findall(HEADER_PATTERN, html)
-            new_top_news = set(top_30).difference(self.headers)
-            self.headers = self.headers.union(set(top_30))
+            new_top_news = set(top_30).difference(set(self.headers))
+            self.headers.extend(new_top_news)
             if new_top_news:
                 self.update_queue(html, new_top_news)
 
@@ -177,18 +171,15 @@ class Crawler:
         necessary links to download to which wiil be stored in self.download_queue
         """
         while True:
-            while not self.queue.empty():
-                news, link, element_id = self.queue.get_nowait()
-                logging.info('MAIN LINK: {}'.format(link))
-                news_dir = self.create_dir(news)
-                self.download_queue.put_nowait(
-                    (os.path.join(news_dir, 'index.html'), link))
-                if element_id:
-                    await asyncio.ensure_future(
-                        self.get_comment_links(element_id, news_dir))
-                self.queue.task_done()
-
-            await self.take_a_nap(1)
+            news, link, element_id = await self.queue.get()
+            logging.info('MAIN LINK: {}'.format(link))
+            news_dir = self.create_dir(news)
+            self.download_queue.put_nowait(
+                (os.path.join(news_dir, 'index.html'), link))
+            if element_id:
+                await asyncio.ensure_future(
+                    self.get_comment_links(element_id, news_dir))
+            self.queue.task_done()
 
     def put_comment_links_to_queue(self, news_dir, html):
         """
@@ -218,13 +209,13 @@ class Crawler:
             async with aiohttp.ClientSession() as session:
                 if not link.startswith('http'):
                     link = HOME_PAGE + link
-                html = await self.fetch(session, link)
-        if html:
-            if link.endswith('pdf'):
-                file_name = file_name[:-4] + 'pdf'
-            with open(file_name, 'wb') as wfile:
-                logging.info("WRITING TO {}".format(file_name))
-                wfile.write(html)
+                async with session.get(link) as response:
+                    if link.endswith('pdf'):
+                       file_name = file_name[:-4] + 'pdf'
+                    with open(file_name, 'wb') as wfile:
+                        logging.info("WRITING TO {}".format(file_name))
+                        async for data, _ in response.content.iter_chunks():
+                            wfile.write(data)
 
     def update_queue(self, html, new_top_news):
         """
